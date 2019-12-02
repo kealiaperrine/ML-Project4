@@ -2,8 +2,6 @@ import numpy as np
 import os
 import pca
 import matplotlib.pyplot as plt
-import matplotlib.cm as cm
-
 
 def compress_images(DATA, k):
     output_dir = 'Output'
@@ -14,20 +12,22 @@ def compress_images(DATA, k):
     Z = pca.compute_Z(DATA)
     COV = pca.compute_covariance_matrix(Z)
     PCS, L = pca.find_pcs(COV)
+    PCS = PCS.real
+    L = L.real
     Z_star = pca.project_data(Z, PCS, L, k, 0)
     U_t = np.transpose(PCS)
     X_compressed = np.matmul(Z_star, U_t[0:k])
-
+    
     # rescale
+    avg = np.average(DATA, axis=0)
+    X_compressed = np.array(X_compressed + avg)
     X_compressed *= (255.0 / (X_compressed.max() - X_compressed.min()))
-    # = np.array([[0 if i < 0 else i for i in x] for x in X_compressed])
 
-    X_compressed = np.array(X_compressed, dtype=int)
     count = 0
     for x in X_compressed:
-        print(count)
+        x = x.reshape(60,48)
         s = "image" + str(count) + ".jpg"
-        plt.imsave(os.path.join(output_dir, s), x,  cmap='gray')
+        plt.imsave(os.path.join(output_dir, s), x,  cmap='gray', vmin=0, vmax=255)
         count +=1
 
 
